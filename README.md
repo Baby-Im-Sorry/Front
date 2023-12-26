@@ -1,1 +1,1 @@
-# bis-app
+# BIS
