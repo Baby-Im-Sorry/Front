@@ -5,7 +5,8 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key, username});
+  final String username;
+  const HomeScreen({super.key, required this.username});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -43,12 +44,17 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _startBriefing(context) async {
+    print(selectedTime.format(context));
     final response = await http.post(
       Uri.parse('http://127.0.0.1:8000/briefing'),
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: {'interval': _controller.text},
+      body: {
+        'username' : widget.username,
+        'interval' : _controller.text,
+        'endtime' : selectedTime.format(context),
+      },
     );
     if (response.statusCode == 200) {
       print(response.statusCode);
@@ -113,13 +119,13 @@ class _HomeScreenState extends State<HomeScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text("selected time: ${selectedTime.format(context)}"),
+                  Text("end time: ${selectedTime.format(context)}"),
                   const SizedBox(
-                    width: 110,
+                    width: 130,
                   ),
                   ElevatedButton(
                     onPressed: () => _selectTime(context),
-                    child: const Text('select the time'),
+                    child: const Text('set the end time'),
                   ),
                 ],
               ),
@@ -131,7 +137,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: ElevatedButton(
                   onPressed: () {
                     // print(_formKey.currentState);
-                    if (_formKey.currentState!.validate()) {
+                    if (selectedTime == TimeOfDay.now()) {
+                      Fluttertoast.showToast(
+                        msg: "please set the end time",
+                        toastLength: Toast.LENGTH_SHORT,
+                        gravity: ToastGravity.BOTTOM,
+                        timeInSecForIosWeb: 3,
+                        fontSize: 16.0,
+                      );
+                    } else if (_formKey.currentState!.validate()) {
                       print('nice');
                       _startBriefing(context);
                     }
