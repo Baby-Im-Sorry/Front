@@ -44,9 +44,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _startBriefing(context) async {
-    print(selectedTime.format(context));
+    // print(selectedTime.format(context));
+    // print(_controller.text);
+    // print(widget.username);
+    String url = 'http://13.125.63.186:8000/startBriefing';
+    // String url = 'http://127.0.0.1:8001/startBriefing';
     final response = await http.post(
-      Uri.parse('http://127.0.0.1:8000/briefing'),
+      Uri.parse(url),
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
@@ -64,7 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
             builder: (context) => const ChatScreen())
       );
     } else {
-      print('Login Failed: ${response.body}');
+      print('startBreifing Failed: ${response.body}');
     }
   }
 
@@ -119,7 +123,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text("end time: ${selectedTime.format(context)}"),
+                  Text("end time: ${selectedTime.format(context).toString().split(":")[0]}:00"),
                   const SizedBox(
                     width: 130,
                   ),
@@ -131,6 +135,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(
                 height: 50,
+                child: Text('Now only time is available. Minutes are not available.'),
               ),
               Align(
                 alignment: Alignment.center,
@@ -146,7 +151,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         fontSize: 16.0,
                       );
                     } else if (_formKey.currentState!.validate()) {
-                      print('nice');
+                      // print('nice');
                       _startBriefing(context);
                     }
                   },
