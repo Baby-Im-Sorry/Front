@@ -1,8 +1,9 @@
-import 'package:bis_front/chat.dart';
+import 'package:bis_front/briefing.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
+
 
 class HomeScreen extends StatefulWidget {
   final String username;
@@ -24,6 +25,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
     if (picked != null && picked != selectedTime) {
       final now = TimeOfDay.now();
+      print(now);
       if (picked.hour < now.hour || (picked.hour == now.hour && picked.minute < now.minute)) {
         setState(() {
           selectedTime = now;
@@ -43,33 +45,55 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _startBriefing(context) async {
-    // print(selectedTime.format(context));
-    // print(_controller.text);
-    // print(widget.username);
-    String url = 'http://13.125.63.186:8000/startBriefing';
-    // String url = 'http://127.0.0.1:8001/startBriefing';
-    final response = await http.post(
-      Uri.parse(url),
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: {
-        'username' : widget.username,
-        'interval' : _controller.text,
-        'endtime' : selectedTime.format(context),
-      },
-    );
-    if (response.statusCode == 200) {
-      print(response.statusCode);
-      Navigator.push(
+  // Future<void> _startBriefing(context) async {
+  //   // String url = 'http://13.125.63.186:8000/startBriefing';
+  //   String url = 'http://127.0.0.1:8000/startBriefing';
+  //   final response = await http.post(
+  //     Uri.parse(url),
+  //     headers: {
+  //       'Content-Type': 'application/x-www-form-urlencoded',
+  //     },
+  //     body: {
+  //       'username' : widget.username,
+  //       'interval' : _controller.text,
+  //       'endtime' : selectedTime.format(context),
+  //     },
+  //   );
+  //   if (response.statusCode == 200) {
+  //     // print(response.statusCode);
+  //     Navigator.push(
+  //       context,
+  //       MaterialPageRoute(
+  //           builder: (context) => const ChatScreen())
+  //     );
+  //   } else {
+  //     print('startBreifing Failed: ${response.body}');
+  //   }
+  // }
+
+  void _startBriefing(context) {
+    // String url = 'http://13.125.63.186:8000/startBriefing';
+    // String url = 'http://127.0.0.1:8000/startBriefing';
+    // final response = await http.post(
+    //   Uri.parse(url),
+    //   headers: {
+    //     'Content-Type': 'application/x-www-form-urlencoded',
+    //   },
+    //   body: {
+    //     'username' : widget.username,
+    //     'interval' : _controller.text,
+    //     'endtime' : selectedTime.format(context),
+    //   },
+    // );
+    final interval = _controller.text;
+    final endtime = selectedTime.format(context);
+    final websocketUrl = 'ws://127.0.0.1:8000/ws?username=${widget.username}&interval=$interval&endtime=$endtime';
+
+    Navigator.push(
         context,
         MaterialPageRoute(
-            builder: (context) => const ChatScreen())
-      );
-    } else {
-      print('startBreifing Failed: ${response.body}');
-    }
+            builder: (context) => ChatScreen(websocketUrl: websocketUrl, username: widget.username))
+    );
   }
 
   @override
@@ -123,9 +147,10 @@ class _HomeScreenState extends State<HomeScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text("end time: ${selectedTime.format(context).toString().split(":")[0]}:00"),
+                  // Text("end time: ${selectedTime.format(context).toString().split(":")[0]}:00"),
+                  Text("end time: ${selectedTime.format(context)}"),
                   const SizedBox(
-                    width: 130,
+                    width: 120,
                   ),
                   ElevatedButton(
                     onPressed: () => _selectTime(context),
