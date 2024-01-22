@@ -10,6 +10,7 @@ dependencies:
   http: ^1.1.2
   cupertino_icons: ^1.0.2
   fluttertoast: ^8.2.4
+  web_socket_channel: ^2.4.0
 
   flutter:
     sdk: flutter
