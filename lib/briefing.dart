@@ -75,7 +75,7 @@ class _ChatScreenState extends State<ChatScreen> {
   // }
 
   void _new() {
-    _channel = WebSocketChannel.connect(Uri.parse(widget.websocketUrl));
+    // _channel = WebSocketChannel.connect(Uri.parse(widget.websocketUrl));
   }
 
   @override
@@ -83,13 +83,16 @@ class _ChatScreenState extends State<ChatScreen> {
     super.initState();
     // setState(() {
     // _connectToWebSocket();
-    _new();
+    // _new();
     // });
 
   }
 
   @override
   Widget build(BuildContext context) {
+
+    _channel = WebSocketChannel.connect(Uri.parse(widget.websocketUrl));
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Briefing'),
