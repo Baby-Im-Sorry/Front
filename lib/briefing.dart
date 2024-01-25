@@ -15,54 +15,58 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  // final TextEditingController myController = TextEditingController();
   WebSocketChannel? _channel;
-  // final channel = WebSocketChannel.connect(Uri.parse(widget.websocketUrl));
   List<String> messages = [];
   String request_id = "";
 
-  Future<void> _getCurrentBriefing() async {
-    String url = 'http://127.0.0.1:8000/getCurrentBriefing?username=${widget.username}';
-    final response = await http.get(Uri.parse(url));
-    if (response.statusCode == 200) {
-      // print(response.body);
-      var data = jsonDecode(response.body);
-      // print(data);
-      request_id = data['request_id'];
-      var content = data['content'] as List<dynamic>;
-      var stringList = content.map((e) => e as String).toList();
-      // print(content);
-      if (stringList != []) {
-        setState(() {
-          messages.addAll(stringList);
-        });
-      }
-      // print(messages);
-    } else {
-      print('error');
-    }
-  }
+  // Future<void> _getCurrentBriefing() async {
+  //   String url = 'http://127.0.0.1:8000/getCurrentBriefing?username=${widget.username}';
+  //   final response = await http.get(Uri.parse(url));
+  //   if (response.statusCode == 200) {
+  //     // print(response.body);
+  //     var data = jsonDecode(response.body);
+  //     // print(data);
+  //     request_id = data['request_id'];
+  //     var content = data['content'] as List<dynamic>;
+  //     var stringList = content.map((e) => e as String).toList();
+  //     // print(content);
+  //     if (stringList != []) {
+  //       setState(() {
+  //         messages.addAll(stringList);
+  //       });
+  //     }
+  //     // print(messages);
+  //   } else {
+  //     print('error');
+  //   }
+  // }
 
-  Future<void> _endBriefing(context) async {
-    String url = 'http://127.0.0.1:8000/endBriefing';
-    final response = await http.post(
-      Uri.parse(url),
-      headers: {
-        'Content_Type': 'application/x-www-form-urlencoded',
-      },
-      body: {
-        'username': widget.username,
-        'request_id': request_id,
-      },
-    );
-    if (response.statusCode == 200) {
-      _channel?.sink.close();
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(
-            builder: (context) => HomeScreen(username: widget.username)),
-            (Route<dynamic> route) => false,
+  Future<void> _endBriefing(BuildContext context, username) async {
+    String url = 'http://10.0.2.2:8000/endBriefing';
+    print('plz');
+    _channel?.sink.close();
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: {
+          'username': username
+        },
       );
+      print(response.body);
+      if (response.statusCode == 200) {
+        print('yes');
+        // Navigator.pushAndRemoveUntil(
+        //   context,
+        //   MaterialPageRoute(
+        //       builder: (context) => HomeScreen(username: widget.username)),
+        //       (Route<dynamic> route) => false,
+        // );
+      }
+    } catch (e) {
+      print('Error: $e');
     }
   }
 
@@ -74,35 +78,40 @@ class _ChatScreenState extends State<ChatScreen> {
   //   });
   // }
 
-  void _new() {
-    // _channel = WebSocketChannel.connect(Uri.parse(widget.websocketUrl));
-  }
-
   @override
   void initState() {
     super.initState();
-    // setState(() {
-    // _connectToWebSocket();
-    // _new();
-    // });
-
+    _channel = WebSocketChannel.connect(Uri.parse(widget.websocketUrl));
+    // _channel = WebSocketChannel.connect(Uri.parse('ws://127.0.0.1:8000/ws'));
   }
+
+  // void _sendMessage(WebSocketChannel? channel) {
+  //   // WebSocketChannel channel = WebSocketChannel.connect(Uri.parse('ws://127.0.0.1:8000/ws'));
+  //   if (channel != null) {
+  //     // print(channel);
+  //     channel.sink.close();
+  //     print('pressed');
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
-
-    _channel = WebSocketChannel.connect(Uri.parse(widget.websocketUrl));
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Briefing'),
         actions: [
           TextButton(
             onPressed: () {
-              print('pressed');
+              _endBriefing(context, widget.username);
             },
             child: const Text('Stop'),
           ),
+          TextButton(
+            onPressed: () {
+              print(widget.username);
+              print(widget.websocketUrl);
+            },
+            child: const Text('fuck'),)
         ],
       ),
       body: StreamBuilder(
