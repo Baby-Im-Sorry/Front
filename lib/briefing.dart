@@ -1,9 +1,38 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:bis_front/home.dart';
 import 'package:flutter/material.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:http/http.dart' as http;
+
+class WebSocketManager {
+  final WebSocketChannel channel;
+  final StreamController<String> streamController;
+
+  WebSocketManager(String url)
+      : channel = WebSocketChannel.connect(Uri.parse(url)),
+        streamController = StreamController<String>.broadcast() {
+    channel.stream.listen(
+          (data) {
+        streamController.add(data);
+      },
+      onDone: () {
+        streamController.close();
+      },
+      onError: (error) {
+        streamController.addError(error);
+      },
+    );
+  }
+
+  void dispose() {
+    // WebSocket 채널 닫기
+    channel.sink.close();
+    // StreamController 닫기
+    streamController.close();
+  }
+}
 
 class ChatScreen extends StatefulWidget {
   final String websocketUrl;
@@ -17,7 +46,7 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   WebSocketChannel? _channel;
   List<String> messages = [];
-  String request_id = "";
+  WebSocketManager? webSocketManager;
 
   // Future<void> _getCurrentBriefing() async {
   //   String url = 'http://127.0.0.1:8000/getCurrentBriefing?username=${widget.username}';
@@ -41,35 +70,6 @@ class _ChatScreenState extends State<ChatScreen> {
   //   }
   // }
 
-  Future<void> _endBriefing(BuildContext context, username) async {
-    String url = 'http://10.0.2.2:8000/endBriefing';
-    print('plz');
-    _channel?.sink.close();
-    try {
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: {
-          'username': username
-        },
-      );
-      print(response.body);
-      if (response.statusCode == 200) {
-        print('yes');
-        // Navigator.pushAndRemoveUntil(
-        //   context,
-        //   MaterialPageRoute(
-        //       builder: (context) => HomeScreen(username: widget.username)),
-        //       (Route<dynamic> route) => false,
-        // );
-      }
-    } catch (e) {
-      print('Error: $e');
-    }
-  }
-
   // void _connectToWebSocket() {
   //   _getCurrentBriefing().then((value) {
   //     // 웹소켓 채널을 변수에 저장
@@ -78,76 +78,95 @@ class _ChatScreenState extends State<ChatScreen> {
   //   });
   // }
 
+  Future<void> _endBriefing(BuildContext context, username) async {
+    String url = 'http://10.0.2.2:8000/endBriefing';
+    print('plz');
+    // _channel?.sink.close();
+    webSocketManager?.dispose();
+    try {
+      await http.post(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: {
+          'username': username
+        },
+      );
+      print('yes');
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-    _channel = WebSocketChannel.connect(Uri.parse(widget.websocketUrl));
-    // _channel = WebSocketChannel.connect(Uri.parse('ws://127.0.0.1:8000/ws'));
+    webSocketManager = WebSocketManager(widget.websocketUrl);
+    // _channel = WebSocketChannel.connect(Uri.parse(widget.websocketUrl));
   }
-
-  // void _sendMessage(WebSocketChannel? channel) {
-  //   // WebSocketChannel channel = WebSocketChannel.connect(Uri.parse('ws://127.0.0.1:8000/ws'));
-  //   if (channel != null) {
-  //     // print(channel);
-  //     channel.sink.close();
-  //     print('pressed');
-  //   }
-  // }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Briefing'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              _endBriefing(context, widget.username);
-            },
-            child: const Text('Stop'),
-          ),
-          TextButton(
-            onPressed: () {
-              print(widget.username);
-              print(widget.websocketUrl);
-            },
-            child: const Text('fuck'),)
-        ],
-      ),
-      body: StreamBuilder(
-        stream: _channel?.stream,
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return const Text('Error');
-          }
-          if (snapshot.hasData) {
-            messages.add(snapshot.data);
-          }
-          return ListView.builder(
-            itemCount: messages.length,
-            itemBuilder: (BuildContext context, int index) {
-              return ListTile(
-                title: Text(messages[index]),
-              );
-            },
-          );
-        },
+    return PopScope(
+      canPop: true,
+      onPopInvoked: (bool didPop) async {
+        // _channel?.sink.close();
+        webSocketManager?.dispose();
+        Navigator.pop(context);
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Briefing'),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => HomeScreen(username: widget.username)),
+                      (Route<dynamic> route) => false,
+                );
+                await _endBriefing(context, widget.username);
+              },
+              child: const Text('Stop'),
+            ),
+            TextButton(
+              onPressed: () {
+                print(widget.username);
+                print(widget.websocketUrl);
+              },
+              child: const Text('fuck'),)
+          ],
+        ),
+        body: StreamBuilder(
+          // stream: _channel?.stream,
+          stream: webSocketManager?.streamController.stream,
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return const Text('Error');
+            }
+            if (snapshot.hasData) {
+              messages.add(snapshot.data ?? 'No data');
+            }
+            return ListView.builder(
+              itemCount: messages.length,
+              itemBuilder: (BuildContext context, int index) {
+                return ListTile(
+                  title: Text(messages[index]),
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }
 
-  // void sendMessage() {
-  //   if (my_controller.text.isNotEmpty) {
-  //     channel.sink.add(my_controller.text);
-  //     my_controller.text = '';
-  //   }
-  // }
-
-  // close the connection
   @override
   void dispose() {
-    _channel?.sink.close();
-    // myController.dispose();
+    // _channel?.sink.close();
+    webSocketManager?.dispose();
     super.dispose();
   }
 }
