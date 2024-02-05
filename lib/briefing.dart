@@ -48,36 +48,6 @@ class _ChatScreenState extends State<ChatScreen> {
   List<String> messages = [];
   WebSocketManager? webSocketManager;
 
-  // Future<void> _getCurrentBriefing() async {
-  //   String url = 'http://127.0.0.1:8000/getCurrentBriefing?username=${widget.username}';
-  //   final response = await http.get(Uri.parse(url));
-  //   if (response.statusCode == 200) {
-  //     // print(response.body);
-  //     var data = jsonDecode(response.body);
-  //     // print(data);
-  //     request_id = data['request_id'];
-  //     var content = data['content'] as List<dynamic>;
-  //     var stringList = content.map((e) => e as String).toList();
-  //     // print(content);
-  //     if (stringList != []) {
-  //       setState(() {
-  //         messages.addAll(stringList);
-  //       });
-  //     }
-  //     // print(messages);
-  //   } else {
-  //     print('error');
-  //   }
-  // }
-
-  // void _connectToWebSocket() {
-  //   _getCurrentBriefing().then((value) {
-  //     // 웹소켓 채널을 변수에 저장
-  //     _channel = WebSocketChannel.connect(Uri.parse(widget.websocketUrl));
-  //     // 필요한 추가 로직 (예: 상태 업데이트, 메시지 수신 처리 등)
-  //   });
-  // }
-
   Future<void> _endBriefing(BuildContext context, username) async {
     String url = 'http://10.0.2.2:8000/endBriefing';
     print('plz');
@@ -103,7 +73,6 @@ class _ChatScreenState extends State<ChatScreen> {
   void initState() {
     super.initState();
     webSocketManager = WebSocketManager(widget.websocketUrl);
-    // _channel = WebSocketChannel.connect(Uri.parse(widget.websocketUrl));
   }
 
   @override
@@ -117,30 +86,45 @@ class _ChatScreenState extends State<ChatScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Briefing'),
-          actions: [
-            TextButton(
-              onPressed: () async {
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => HomeScreen(username: widget.username)),
-                      (Route<dynamic> route) => false,
-                );
-                await _endBriefing(context, widget.username);
-              },
-              child: const Text('Stop'),
+          centerTitle: true,
+          title: const Text(
+            'Briefing',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
             ),
-            TextButton(
-              onPressed: () {
-                print(widget.username);
-                print(widget.websocketUrl);
-              },
-              child: const Text('fuck'),)
+          ),
+          actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 10.0),
+              child: TextButton(
+                onPressed: () async {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => HomeScreen(username: widget.username)),
+                        (Route<dynamic> route) => false,
+                  );
+                  await _endBriefing(context, widget.username);
+                },
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.lightGreenAccent, // 버튼 배경색
+                  padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0), // 버튼 내부 패딩
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(20)), // 버튼 모서리 둥글기
+                  ),
+                ),
+                child: const Text(
+                  'Stop',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+            )
           ],
         ),
         body: StreamBuilder(
-          // stream: _channel?.stream,
           stream: webSocketManager?.streamController.stream,
           builder: (context, snapshot) {
             if (snapshot.hasError) {
@@ -149,13 +133,30 @@ class _ChatScreenState extends State<ChatScreen> {
             if (snapshot.hasData) {
               messages.add(snapshot.data ?? 'No data');
             }
-            return ListView.builder(
-              itemCount: messages.length,
-              itemBuilder: (BuildContext context, int index) {
-                return ListTile(
-                  title: Text(messages[index]),
-                );
-              },
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 50, bottom: 80, left: 30, right: 30),
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(30),
+                    color: Colors.brown.shade50,
+                  ),
+                  child: ListView.builder(
+                    itemCount: messages.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      return ListTile(
+                        title: Text(
+                          messages[index],
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
             );
           },
         ),
