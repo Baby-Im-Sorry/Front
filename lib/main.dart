@@ -1,4 +1,3 @@
-import 'package:bis_front/home.dart';
 import 'package:flutter/material.dart';
 import 'package:bis_front/login.dart';
 
@@ -13,9 +12,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'BIS',
+      debugShowCheckedModeBanner: false,
       locale: const Locale('ko', 'KR'),
       home: LoginScreen()
-      // home: HomeScreen(username: "test1"),
     );
   }
 }
