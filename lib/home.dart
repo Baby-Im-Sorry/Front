@@ -1,11 +1,11 @@
 import 'dart:async';
-
 import 'package:bis_front/activebriefing.dart';
 import 'package:bis_front/briefing.dart';
+import 'package:bis_front/gptcustom.dart';
+import 'package:bis_front/history.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:http/http.dart' as http;
 
 
 class HomeScreen extends StatefulWidget {
@@ -20,6 +20,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _controller = TextEditingController();
   TimeOfDay selectedTime = TimeOfDay.now();
   final _formKey = GlobalKey<FormState>();
+  int _selectedIndex = 0;
 
   Future<void> _selectTime(BuildContext context) async {
     TimeOfDay? picked = await showTimePicker(
@@ -48,32 +49,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // Future<void> _startBriefing(context) async {
-  //   // String url = 'http://13.125.63.186:8000/startBriefing';
-  //   String url = 'http://127.0.0.1:8000/startBriefing';
-  //   final response = await http.post(
-  //     Uri.parse(url),
-  //     headers: {
-  //       'Content-Type': 'application/x-www-form-urlencoded',
-  //     },
-  //     body: {
-  //       'username' : widget.username,
-  //       'interval' : _controller.text,
-  //       'endtime' : selectedTime.format(context),
-  //     },
-  //   );
-  //   if (response.statusCode == 200) {
-  //     // print(response.statusCode);
-  //     Navigator.push(
-  //       context,
-  //       MaterialPageRoute(
-  //           builder: (context) => const ChatScreen())
-  //     );
-  //   } else {
-  //     print('startBreifing Failed: ${response.body}');
-  //   }
-  // }
-
   void _startBriefing(context) {
     final interval = _controller.text;
     final endtime = selectedTime.format(context);
@@ -85,13 +60,44 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+    switch (index) {
+      case 0:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => HomeScreen(username: widget.username)),
+        );
+        break;
+      case 1:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => HistoryScreen(username: widget.username)),
+        );
+        break;
+      case 2:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => GptCustomScreen(username: widget.username)),
+        );
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     String activeWebsocketUrl = 'ws://10.0.2.2:8000/reloadBriefing?username=${widget.username}';
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: const Text('Home'),
+        title: const Text(
+          'Home',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         actions: [
           TextButton(
             child: const Text('Briefing'),
@@ -105,39 +111,106 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+      bottomNavigationBar: BottomNavigationBar(
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.search),
+            label: 'History',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.account_circle),
+            label: 'Custom',
+          ),
+        ],
+        currentIndex: _selectedIndex,
+        selectedItemColor: Colors.amber[800],
+        onTap: _onItemTapped,
+      ),
       body: Center(
         child: Container(
           width: 400,
           height: 500,
           child: Column(
             children: [
-              Row(
-                children: [
-                  const Text('Time interval'),
-                  const SizedBox(width: 20,),
-                  Expanded(
-                    child: Form(
-                      key: _formKey,
-                      child: TextFormField(
-                        controller: _controller,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          labelText: 'Please Enter 1 to 100',
+              const SizedBox(height: 50,),
+              Padding(
+                padding: const EdgeInsets.only(left: 15.0, right: 15),
+                child: Row(
+                  children: [
+                    const Text(
+                      'Time interval',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(width: 20),
+                    Expanded(
+                      child: Form(
+                        key: _formKey,
+                        child: TextFormField(
+                          controller: _controller,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(),
+                            labelText: 'Please Enter 1 to 100',
+                            labelStyle: TextStyle(
+                              color: Colors.grey.shade400,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey.shade200,
+                          ),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter a number';
+                            }
+                            final intValue = int.tryParse(value);
+                            if (intValue == null || intValue < 1 || intValue > 100) {
+                              return 'Enter only 1 to 100';
+                            }
+                            return null;
+                          },
                         ),
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter a number';
-                          }
-                          final intValue = int.tryParse(value);
-                          if (intValue == null || intValue < 1 || intValue > 100) {
-                            return 'Enter only 1 to 100';
-                          }
-                          return null;
-                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(
+                height: 50,
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "end time: ${selectedTime.format(context)}",
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 17,
+                    ),
+                  ),
+                  const SizedBox(
+                    width: 80,
+                  ),
+                  ElevatedButton(
+                    onPressed: () => _selectTime(context),
+                    style: ButtonStyle(
+                      backgroundColor: MaterialStateProperty.all<Color>(Colors.lightGreenAccent),
+                    ),
+                    child: const Text(
+                      'set the end time',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
@@ -146,43 +219,30 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(
                 height: 50,
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Text("end time: ${selectedTime.format(context).toString().split(":")[0]}:00"),
-                  Text("end time: ${selectedTime.format(context)}"),
-                  const SizedBox(
-                    width: 120,
+              ElevatedButton(
+                onPressed: () {
+                  if (selectedTime == TimeOfDay.now()) {
+                    Fluttertoast.showToast(
+                      msg: "please set the end time",
+                      toastLength: Toast.LENGTH_SHORT,
+                      gravity: ToastGravity.BOTTOM,
+                      timeInSecForIosWeb: 3,
+                      fontSize: 16.0,
+                    );
+                  } else if (_formKey.currentState!.validate()) {
+                    _startBriefing(context);
+                  }
+                },
+                style: ButtonStyle(
+                  minimumSize: MaterialStateProperty.all<Size>(const Size(350, 40)),
+                  backgroundColor: MaterialStateProperty.all<Color>(Colors.cyan.shade100),
+                ),
+                child: const Text(
+                  'Start briefing',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
                   ),
-                  ElevatedButton(
-                    onPressed: () => _selectTime(context),
-                    child: const Text('set the end time'),
-                  ),
-                ],
-              ),
-              const SizedBox(
-                height: 50,
-                child: Text('Now only time is available. Minutes are not available.'),
-              ),
-              Align(
-                alignment: Alignment.center,
-                child: ElevatedButton(
-                  onPressed: () {
-                    // print(_formKey.currentState);
-                    if (selectedTime == TimeOfDay.now()) {
-                      Fluttertoast.showToast(
-                        msg: "please set the end time",
-                        toastLength: Toast.LENGTH_SHORT,
-                        gravity: ToastGravity.BOTTOM,
-                        timeInSecForIosWeb: 3,
-                        fontSize: 16.0,
-                      );
-                    } else if (_formKey.currentState!.validate()) {
-                      // print('nice');
-                      _startBriefing(context);
-                    }
-                  },
-                  child: const Text('Start briefing'),
                 ),
               ),
             ],
