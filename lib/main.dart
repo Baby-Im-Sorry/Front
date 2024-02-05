@@ -11,11 +11,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       title: 'BIS',
-      locale: Locale('ko', 'KR'),
-      // home: LoginScreen(),
-      home: HomeScreen(username: "test1"),
+      locale: const Locale('ko', 'KR'),
+      home: LoginScreen()
+      // home: HomeScreen(username: "test1"),
     );
   }
 }

@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:bis_front/home.dart';
@@ -9,13 +8,16 @@ class LoginScreen extends StatelessWidget {
   LoginScreen({super.key});
 
   Future<void> _login(context) async {
+    String url = 'http://10.0.2.2:8000/login';
     try {
       final response = await http.post(
-        Uri.parse('http://127.0.0.1:8000/login'),
+        Uri.parse(url),
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: {'username': _usernameController.text},
+        body: {
+          'username': _usernameController.text
+        },
       );
       if (response.statusCode == 200) {
         print(response.statusCode);
