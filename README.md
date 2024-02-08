@@ -1,5 +1,5 @@
-## 방구석 브리핑 - Front-end
-
+방구석 브리핑_Frontend
+========================
 ### General info
 -----
 Implemented front-end application pages of BIS-'방구석 브리핑' with Flutter(Dart) for Prometheus AI service Hackathon on 02 Feb, 2024 ~ 03 Feb, 2024
